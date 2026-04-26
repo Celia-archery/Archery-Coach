@@ -2,9 +2,9 @@
    sessions.js — Session entry for all round types
    Bullseye (practice + competition) | Animal 2D | Animal 3D
    ============================================================ */
-
+ 
 const Sessions = (() => {
-
+ 
   /* ======================================================
      STATE
      ====================================================== */
@@ -20,7 +20,7 @@ const Sessions = (() => {
     flights:      [],      // [{ distance, practice, arrows:[0-10 x5], total }]
     animalLanes:  []       // [{ distance, animal, score }]
   };
-
+ 
   /* ======================================================
      RENDER — Session type / round selector
      ====================================================== */
@@ -44,7 +44,7 @@ const Sessions = (() => {
       </div>
       ${state.sessionType==='competition' ? renderCategorySelector() : ''}`;
   }
-
+ 
   function renderCategorySelector() {
     return `
       <div class="form-group">
@@ -56,7 +56,7 @@ const Sessions = (() => {
         </select>
       </div>`;
   }
-
+ 
   /* ======================================================
      RENDER — Wellbeing (mood, physical, steps, tags, notes)
      ====================================================== */
@@ -73,7 +73,7 @@ const Sessions = (() => {
               ${m.emoji}<span>${m.label}</span>
             </button>`).join('')}
         </div>
-
+ 
         <div class="section-title">Physical Readiness</div>
         <div class="emoji-rating">
           ${C.PHYSICAL_EMOJIS.map(m=>`
@@ -82,7 +82,7 @@ const Sessions = (() => {
               ${m.emoji}<span>${m.label}</span>
             </button>`).join('')}
         </div>
-
+ 
         <div class="section-title">Focus Steps (NASP 11)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
           ${C.STEPS.map((s,i)=>`
@@ -90,7 +90,7 @@ const Sessions = (() => {
               onclick="Sessions.toggleStep(${i})">${i+1}. ${s.name}</button>`
           ).join('')}
         </div>
-
+ 
         <div class="section-title">Tags</div>
         <div class="tags-wrap">
           ${C.TAGS.map(t=>`
@@ -98,30 +98,30 @@ const Sessions = (() => {
               onclick="Sessions.toggleTag('${t}')">${t}</span>`
           ).join('')}
         </div>
-
+ 
         <div class="section-title">Notes</div>
         <textarea placeholder="Any notes about this session…"
           oninput="Sessions.setNotes(this.value)">${state.notes}</textarea>
       </div>`;
   }
-
+ 
   /* ======================================================
      RENDER — Bullseye score entry
      ====================================================== */
   function renderBullseye() {
     const wrap = document.getElementById('score-entry-wrap');
     if (!wrap) return;
-
+ 
     const scored = state.flights.filter(f => !f.practice);
     const total  = scored.reduce((a,f) => a + f.total, 0);
     const max    = scored.length * 50;
-
+ 
     // Per-distance running averages
     const by = { 10:[], 15:[] };
     scored.forEach(f => { if (by[f.distance]) by[f.distance].push(f.total); });
     const avg10 = avg(by[10]);
     const avg15 = avg(by[15]);
-
+ 
     wrap.innerHTML = `
       <div class="running-bar">
         <div>
@@ -135,7 +135,7 @@ const Sessions = (() => {
           ${avg15 ? `<div style="font-size:12px;color:var(--sage-light);">15m avg: ${avg15}/50</div>` : ''}
         </div>
       </div>
-
+ 
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div class="card-title" style="margin:0;">Flights</div>
@@ -148,7 +148,7 @@ const Sessions = (() => {
           <button class="btn btn-primary btn-sm" onclick="Sessions.addFlight(10,false)">+ Score 10m</button>
           <button class="btn btn-primary btn-sm" onclick="Sessions.addFlight(15,false)">+ Score 15m</button>
         </div>
-
+ 
         <div id="flights-list">
           ${state.flights.length
             ? state.flights.map((f,i) => renderFlight(f, i)).join('')
@@ -158,7 +158,7 @@ const Sessions = (() => {
         </div>
       </div>`;
   }
-
+ 
   /* ---- Single flight block ---- */
   function renderFlight(f, idx) {
     return `
@@ -170,7 +170,7 @@ const Sessions = (() => {
             <button class="btn btn-xs btn-danger" onclick="Sessions.removeFlight(${idx})">✕</button>
           </div>
         </div>
-
+ 
         <!-- Quick-fill ring buttons (one score per arrow, user clicks each arrow separately) -->
         <div style="font-size:11px;color:var(--ink-muted);margin-bottom:6px;">
           Tap a ring score to set it for the <strong>selected arrow</strong>, or type directly:
@@ -195,7 +195,7 @@ const Sessions = (() => {
               onclick="Sessions.quickFill(${idx}, ${r.score})">${r.score}</button>`
           ).join('')}
         </div>
-
+ 
         <!-- Five arrow inputs — no labels beneath -->
         <div class="arrow-row">
           ${f.arrows.map((val, ai) => `
@@ -210,30 +210,30 @@ const Sessions = (() => {
                 onblur="Sessions.commitArrow(${idx}, ${ai}, this)">
             </div>`).join('')}
         </div>
-
+ 
         <!-- Confirm button to lock in manually typed scores -->
         <button class="btn btn-outline btn-sm btn-block" style="margin-top:10px;"
           onclick="Sessions.confirmFlight(${idx})">✓ Confirm arrows</button>
-
+ 
       </div>
       <div style="height:1px;background:var(--border);margin:10px 0;"></div>`;
   }
-
+ 
   /* ======================================================
      RENDER — Animal score entry (2D and 3D)
      ====================================================== */
   function renderAnimal() {
     const wrap = document.getElementById('score-entry-wrap');
     if (!wrap) return;
-
+ 
     while (state.animalLanes.length < 6) {
       const i = state.animalLanes.length;
       state.animalLanes.push({ distance: C.DISTANCES[i], animal: '', score: null });
     }
-
+ 
     const total   = state.animalLanes.reduce((a,l) => a + (l.score || 0), 0);
     const maxPoss = 6 * 10;
-
+ 
     wrap.innerHTML = `
       <div class="running-bar">
         <div class="running-label">Session total</div>
@@ -246,7 +246,7 @@ const Sessions = (() => {
         ${state.animalLanes.map((lane, i) => renderAnimalLane(lane, i)).join('')}
       </div>`;
   }
-
+ 
   function renderAnimalLane(lane, idx) {
     return `
       <div class="flight-block">
@@ -276,7 +276,7 @@ const Sessions = (() => {
       </div>
       <div style="height:1px;background:var(--border);margin:10px 0;"></div>`;
   }
-
+ 
   /* ======================================================
      RENDER — Competition
      ====================================================== */
@@ -284,10 +284,10 @@ const Sessions = (() => {
     const cat  = C.CATEGORIES[state.category];
     const wrap = document.getElementById('score-entry-wrap');
     if (!wrap) return;
-
+ 
     const allScored = state.flights.filter(f => !f.practice);
     const total     = allScored.reduce((a,f) => a + f.total, 0);
-
+ 
     wrap.innerHTML = `
       <div class="running-bar">
         <div class="running-label">Competition total</div>
@@ -321,7 +321,7 @@ const Sessions = (() => {
             </div>
           </div>`).join('')}`).join('')}`;
   }
-
+ 
   /* ======================================================
      STATE MUTATIONS
      ====================================================== */
@@ -337,7 +337,7 @@ const Sessions = (() => {
     if (idx >= 0) state.tags.splice(idx, 1); else state.tags.push(t);
     renderWellbeing();
   }
-
+ 
   /* ---- Flights ---- */
   function addFlight(distance, practice) {
     state.flights.push({ distance, practice, arrows: [null,null,null,null,null], total: 0, round: 0 });
@@ -351,31 +351,31 @@ const Sessions = (() => {
     state.flights.splice(idx, 1);
     render();
   }
-
+ 
   /* ---- Arrow scoring: quick-fill ONE arrow via dropdown + ring button ---- */
   function quickFill(flightIdx, score) {
     const sel = document.getElementById('arrow-select-' + flightIdx);
     const ai  = sel ? parseInt(sel.value) : 0;
     const f   = state.flights[flightIdx];
     if (!f) return;
-
+ 
     f.arrows[ai] = score;
     f.total = f.arrows.reduce((a, b) => a + (b || 0), 0);
-
+ 
     // Update just that input's value + colour
     const input = document.getElementById('f' + flightIdx + 'a' + ai);
     if (input) { input.value = score; colourInput(input); }
-
+ 
     // Advance selector to next arrow
     if (sel && ai < 4) sel.value = ai + 1;
-
+ 
     // Update the flight total badge
     const badge = document.getElementById('flight-total-' + flightIdx);
     if (badge) badge.textContent = f.total + ' pts';
-
+ 
     updateRunningTotal();
   }
-
+ 
   /* ---- Arrow scoring: user typed directly into input, confirmed on blur ---- */
   function commitArrow(flightIdx, arrowIdx, input) {
     const v = parseInt(input.value, 10);
@@ -394,7 +394,7 @@ const Sessions = (() => {
     if (badge) badge.textContent = f.total + ' pts';
     updateRunningTotal();
   }
-
+ 
   /* ---- Confirm button: reads all 5 inputs for a flight ---- */
   function confirmFlight(flightIdx) {
     const f = state.flights[flightIdx];
@@ -405,14 +405,14 @@ const Sessions = (() => {
     }
     App.toast('Flight confirmed — ' + f.total + ' pts');
   }
-
+ 
   /* ---- Animal ---- */
   function setAnimal(idx, animal) { state.animalLanes[idx].animal = animal; }
   function setAnimalScore(idx, score) {
     state.animalLanes[idx].score = score;
     renderAnimal();
   }
-
+ 
   /* ======================================================
      HELPERS
      ====================================================== */
@@ -420,7 +420,7 @@ const Sessions = (() => {
     const v = parseInt(input.value, 10);
     input.className = 'arrow-input' + ((!isNaN(v) && v >= 0 && v <= 10) ? ' score-' + v : '');
   }
-
+ 
   function updateRunningTotal() {
     const el = document.getElementById('running-score-val');
     if (!el) return;
@@ -431,19 +431,19 @@ const Sessions = (() => {
       : scored.length * 50;
     el.innerHTML = `${total} <span style="font-size:16px;opacity:.6"> / ${max || '—'}</span>`;
   }
-
+ 
   function avg(arr) {
     if (!arr.length) return 0;
     return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
   }
-
+ 
   function calcTotal() {
     if (state.roundType === 'bullseye') {
       return state.flights.filter(f => !f.practice).reduce((a, f) => a + f.total, 0);
     }
     return state.animalLanes.reduce((a, l) => a + (l.score || 0), 0);
   }
-
+ 
   function calcMax() {
     if (state.sessionType === 'competition') return C.CATEGORIES[state.category].maxTotal;
     if (state.roundType === 'bullseye') {
@@ -451,19 +451,19 @@ const Sessions = (() => {
     }
     return 60;
   }
-
+ 
   /* ======================================================
      SAVE
      ====================================================== */
   async function save() {
     // Confirm any unconfirmed inputs first
     state.flights.forEach((f, idx) => confirmFlight(idx));
-
+ 
     const total    = calcTotal();
     const maxTotal = calcMax();
-
+ 
     if (total === 0) { App.toast('Enter at least one score before saving'); return; }
-
+ 
     const session = {
       type:              state.sessionType,
       roundType:         state.roundType,
@@ -478,16 +478,16 @@ const Sessions = (() => {
       total,
       maxTotal
     };
-
+ 
     Storage.addSession(session);
     App.toast('Session saved! Getting coach feedback…');
     const feedback = await Coach.autoCoach({ ...session });
-
+ 
     resetState();
     render();
     App.showCoachModal(feedback);
   }
-
+ 
   function resetState() {
     state = {
       sessionType: 'practice', roundType: 'bullseye', category: 'jnr',
@@ -495,7 +495,7 @@ const Sessions = (() => {
       tags: [], notes: '', flights: [], animalLanes: []
     };
   }
-
+ 
   /* ======================================================
      MAIN RENDER
      ====================================================== */
@@ -510,7 +510,7 @@ const Sessions = (() => {
       renderAnimal();
     }
   }
-
+ 
   return {
     render,
     setType, setRound, setCategory,
@@ -522,3 +522,4 @@ const Sessions = (() => {
     save
   };
 })();
+ 
